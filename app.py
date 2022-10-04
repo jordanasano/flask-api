@@ -54,7 +54,7 @@ def create_user():
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"post_user":"successful"})
+    return jsonify({"post_user":"successful"}), 201
 
 @app.delete('/users/<int:id>')
 def delete_user(id):

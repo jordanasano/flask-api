@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from app import app, db
 from models import User, Post
+from flask import json
 
 # Let's configure our app to use a different database for tests
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql:///flask-api-test"
@@ -51,6 +52,45 @@ class UserViewTestCase(TestCase):
     def test_list_users(self):
         with self.client as c:
             resp = c.get("/users")
+
             self.assertEqual(resp.status_code, 200)
-            html = resp.get_data(as_text=True)
-            print('html =',html)
+
+            usersJSON = resp.get_data(as_text=True)
+            users = json.loads(usersJSON)
+
+            self.assertIn({
+                "first_name":"test_first",
+                "last_name":"test_last", 
+                "id":self.user_id
+            }, users)
+
+    def test_create_user(self):
+        with self.client as c:
+            resp = c.post("/users", 
+            json={
+                "first_name":"new_first", 
+                "last_name":"new_last"
+            })
+
+            self.assertEqual(resp.status_code, 201)
+
+            responseJSON = resp.get_data(as_text=True)
+            response = json.loads(responseJSON)
+
+            self.assertEqual({"post_user":"successful"}, response)
+
+    def test_delete_user(self):
+        with self.client as c:
+            resp = c.delete(f'/users/{self.user_id}')
+
+            self.assertEqual(resp.status_code, 200)
+
+            responseJSON = resp.get_data(as_text=True)
+            response = json.loads(responseJSON)
+
+            self.assertEqual({"deleted":self.user_id}, response)
+
+            resp2 = c.delete(f'/users/{100000}')
+
+            self.assertEqual(resp2.status_code, 404)
+    
